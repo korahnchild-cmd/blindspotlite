@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>블라인드 스팟 체크업 — AI × 전문가 자문 진단</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&family=Noto+Serif+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0d12;
+            --card-bg: #13161e;
+            --navy: #e8e6e3;
+            --navy-light: #c0bdb8;
+            --gold: #c58940;
+            --gold-light: #f0d9a8;
+            --gold-bg: rgba(197, 137, 64, 0.08);
+            --text: #c9c6c1;
+            --text-dim: #8a8680;
+            --text-bright: #f4f2ef;
+            --border: #262a33;
+            --radius: 18px;
+            --radius-sm: 12px;
+            --shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.5);
+            --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.75;
+            -webkit-font-smoothing: antialiased;
+            font-size: 16px;
+            overflow-x: hidden;
+        }
+        .container { max-width: 720px; margin: 0 auto; padding: 0 20px; position: relative; z-index: 1; }
+
+        /* ── Top bar ── */
+        .topbar {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(11, 13, 18, 0.8); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 14px 0;
+        }
+        .topbar-inner { max-width: 720px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: 0.04em; color: var(--text-bright); text-decoration: none; }
+        .logo span { color: var(--gold); font-weight: 700; }
+        .topbar-badge { font-size: 0.7rem; font-weight: 600; color: var(--gold); background: var(--gold-bg); padding: 6px 15px; border-radius: 20px; letter-spacing: 0.06em; border: 1px solid rgba(197, 137, 64, 0.2); }
+
+        /* ── Hero ── */
+        .hero { padding: 70px 0 36px; text-align: center; }
+        .hero-tag { display: inline-block; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.1em; color: var(--gold); background: rgba(197, 137, 64, 0.08); padding: 6px 18px; border-radius: 20px; margin-bottom: 22px; border: 1px solid rgba(197, 137, 64, 0.15); }
+        .hero h1 { font-family: 'Noto Serif KR', serif; font-size: 2.4rem; font-weight: 700; color: var(--text-bright); letter-spacing: -0.03em; line-height: 1.4; margin-bottom: 14px; }
+        .hero h1 span { color: var(--gold); }
+        .hero-sub { font-size: 1rem; color: var(--text-dim); max-width: 500px; margin: 0 auto 24px; line-height: 1.8; font-weight: 400; }
+        .hero-highlight-box { display: flex; align-items: center; justify-content: center; gap: 28px; background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 60px; padding: 12px 28px; margin: 0 auto; max-width: 480px; box-shadow: 0 0 30px rgba(0,0,0,0.3); }
+        .highlight-item { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; color: var(--text-dim); }
+        .highlight-item .icon { font-size: 1.1rem; }
+        .highlight-item strong { color: var(--text-bright); font-weight: 700; }
+
+        /* ── 경로 선택 ── */
+        .path-section { padding: 30px 0 50px; }
+        .path-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .path-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px 22px 24px; text-align: center; cursor: pointer; transition: var(--transition); box-shadow: var(--shadow); text-decoration: none; color: inherit; display: block; position: relative; }
+        .path-card:hover { border-color: var(--gold); box-shadow: 0 0 25px rgba(197, 137, 64, 0.15); transform: translateY(-3px); }
+        .path-emoji { font-size: 2.8rem; margin-bottom: 12px; }
+        .path-title { font-size: 1.1rem; font-weight: 700; color: var(--text-bright); margin-bottom: 6px; }
+        .path-desc { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; }
+        .path-badge { display: inline-block; margin-top: 14px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; padding: 4px 14px; border-radius: 12px; background: rgba(197, 137, 64, 0.1); color: var(--gold); border: 1px solid rgba(197, 137, 64, 0.25); }
+
+        /* ── 차별점 & 비교 테이블 ── */
+        .compare-section { padding: 30px 0 50px; }
+        .section-eyebrow { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; color: var(--gold); text-transform: uppercase; text-align: center; margin-bottom: 8px; }
+        .section-title { font-family: 'Noto Serif KR', serif; font-size: 1.6rem; font-weight: 700; color: var(--text-bright); text-align: center; margin-bottom: 6px; }
+        .section-sub { font-size: 0.9rem; color: var(--text-dim); text-align: center; margin-bottom: 28px; }
+        .compare-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card-bg); box-shadow: var(--shadow); }
+        .compare-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+        .compare-table th, .compare-table td { padding: 16px 18px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: middle; }
+        .compare-table th { font-weight: 700; color: var(--text-bright); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; background: rgba(255,255,255,0.02); }
+        .compare-table td { color: var(--text-dim); }
+        .compare-table .highlight-cell { color: var(--gold-light); font-weight: 700; }
+        .compare-table .us { background: rgba(197, 137, 64, 0.05); }
+        .compare-table .them { background: rgba(255,255,255,0.01); }
+        .check { color: var(--gold); font-weight: 600; }
+        .cross { color: #5a5550; }
+        .price-value { color: var(--text-bright); font-weight: 700; }
+
+        /* ── 전문가 검토 시스템 ── */
+        .expert-section { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 36px 28px; margin: 20px 0 40px; box-shadow: var(--shadow-lg); }
+        .expert-flow { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 24px; }
+        .flow-step { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px 18px; text-align: center; min-width: 90px; }
+        .flow-step .step-icon { font-size: 1.8rem; margin-bottom: 4px; }
+        .flow-step .step-label { font-size: 0.72rem; font-weight: 700; color: var(--text-bright); }
+        .flow-arrow { font-size: 1.5rem; color: var(--gold); font-weight: 600; }
+        .expert-note { background: var(--gold-bg); border-left: 4px solid var(--gold); padding: 14px 18px; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: 0.85rem; color: var(--text); display: flex; align-items: center; gap: 8px; font-weight: 500; }
+
+        /* ── 가격 ── */
+        .pricing-section { padding: 30px 0 60px; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .pricing-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 16px; text-align: center; box-shadow: var(--shadow); transition: var(--transition); position: relative; }
+        .pricing-card.featured { border-color: var(--gold); background: #181a20; box-shadow: 0 0 0 5px rgba(197, 137, 64, 0.08), var(--shadow-lg); }
+        .plan-name { font-size: 0.8rem; font-weight: 700; color: var(--text-dim); letter-spacing: 0.06em; margin-bottom: 6px; }
+        .plan-price { font-size: 1.8rem; font-weight: 800; color: var(--text-bright); margin-bottom: 2px; }
+        .plan-price span { font-size: 0.85rem; font-weight: 500; color: var(--text-dim); }
+        .plan-desc { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 10px; line-height: 1.5; }
+        .plan-feature { font-size: 0.74rem; color: var(--text); font-weight: 500; margin-bottom: 3px; }
+        .featured-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: var(--gold); color: #0b0d12; font-size: 0.7rem; font-weight: 700; padding: 5px 16px; border-radius: 12px; letter-spacing: 0.05em; white-space: nowrap; }
+
+        /* ── Trust ── */
+        .trust-section { padding: 20px 0 30px; text-align: center; }
+        .trust-quote { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 22px; max-width: 540px; margin: 0 auto 18px; box-shadow: var(--shadow); font-size: 0.95rem; color: var(--text); line-height: 1.8; position: relative; font-style: italic; }
+        .trust-quote .author { display: block; margin-top: 10px; font-size: 0.78rem; color: var(--text-dim); font-weight: 600; font-style: normal; }
+        .trust-logos { display: flex; justify-content: center; gap: 28px; font-size: 0.78rem; color: var(--text-dim); letter-spacing: 0.05em; font-weight: 500; }
+
+        /* ── CTA ── */
+        .cta-section { padding: 30px 0 70px; text-align: center; }
+        .cta-btn { display: inline-block; padding: 18px 42px; background: var(--gold); color: #0b0d12; font-size: 1rem; font-weight: 700; border-radius: 12px; text-decoration: none; transition: var(--transition); box-shadow: 0 10px 28px rgba(197, 137, 64, 0.2); margin-bottom: 12px; letter-spacing: -0.02em; }
+        .cta-btn:hover { background: var(--gold-light); box-shadow: 0 14px 36px rgba(197, 137, 64, 0.3); transform: translateY(-2px); }
+        .cta-note { font-size: 0.78rem; color: var(--text-dim); font-weight: 500; }
+
+        /* ── Footer ── */
+        footer { text-align: center; padding: 24px 0; font-size: 0.7rem; color: var(--text-dim); border-top: 1px solid rgba(255,255,255,0.03); letter-spacing: 0.04em; font-weight: 500; }
+
+        @media (max-width: 640px) {
+            .hero h1 { font-size: 1.8rem; }
+            .path-grid { grid-template-columns: 1fr; }
+            .pricing-grid { grid-template-columns: 1fr; }
+            .pricing-card.featured { order: -1; }
+            .expert-flow { flex-direction: column; }
+            .flow-arrow { transform: rotate(90deg); }
+            .compare-table th, .compare-table td { padding: 12px 10px; font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="topbar">
+        <div class="topbar-inner">
+            <a href="#" class="logo">BLIND<span>SPOT</span></a>
+            <span class="topbar-badge">AI × 전문가 진단</span>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-tag">🧩 소상공인 · 창업자 전용</div>
+            <h1>사업계획서는 만들어줘도<br><span>당신의 맹점은 찾아주지 않습니다</span></h1>
+            <p class="hero-sub">LivePlan이 계획을 '쓰는' 도구라면,<br>우리는 그 계획 속에 숨은 <strong style="color:var(--gold-light); font-weight:700;">치명적인 믿음</strong>을 찾아내 드립니다.</p>
+            <div class="hero-highlight-box">
+                <div class="highlight-item"><span class="icon">🤖</span> AI <strong>1차 정밀 분석</strong></div>
+                <div class="highlight-item"><span class="icon">🧑‍💼</span> 자문위원 <strong>2차 검토</strong></div>
+                <div class="highlight-item"><span class="icon">⚡</span> 24시간 <strong>리포트 발송</strong></div>
+            </div>
+        </section>
+
+        <!-- 경로 선택 -->
+        <section class="path-section">
+            <div class="path-grid">
+                <a href="#track-file" class="path-card" id="trackFileCard">
+                    <div class="path-emoji">📄</div>
+                    <div class="path-title">사업계획서가 있어요</div>
+                    <div class="path-desc">작성하신 계획서, 제안서를 업로드해주세요. 그 안에 숨은 당연함을 파헤쳐 드립니다.</div>
+                    <span class="path-badge">창업자 추천</span>
+                </a>
+                <a href="#track-step" class="path-card" id="trackStepCard">
+                    <div class="path-emoji">📝</div>
+                    <div class="path-title">막연한데 점검받고 싶어요</div>
+                    <div class="path-desc">10단계 질문에 답하며 내 생각을 정리하면, AI와 전문가가 맹점을 찾아냅니다.</div>
+                    <span class="path-badge">운영 중인 사장님</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- 차별성 비교 테이블 -->
+        <section class="compare-section" id="track-step">
+            <div class="section-eyebrow">WHY WE'RE DIFFERENT</div>
+            <h2 class="section-title">LivePlan은 지도를 그리고,<br>우리는 지도 밖의 절벽을 찾습니다</h2>
+            <p class="section-sub">같은 '사업 진단' 같지만, 우리가 파는 것은 <strong style="color:var(--gold-light); font-weight:700;">계획이 아닌 깨달음</strong>입니다.</p>
+            <div class="compare-table-wrap">
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>비교 항목</th>
+                            <th>LivePlan (월 $20)</th>
+                            <th class="us">블라인드 스팟 체크업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="them">
+                            <td>핵심 목적</td>
+                            <td>사업계획서 작성 + 재무 예측</td>
+                            <td class="highlight-cell"><strong>숨은 전제 발견 & 파괴</strong></td>
+                        </tr>
+                        <tr class="us">
+                            <td>접근 방식</td>
+                            <td>템플릿 기반 정량 입력</td>
+                            <td class="highlight-cell">자연어 AI 분석 + 인간 검토</td>
+                        </tr>
+                        <tr class="them">
+                            <td>결과물</td>
+                            <td>PDF 계획서, 대시보드</td>
+                            <td class="highlight-cell">전제 리포트 + 전환 전략 + 30일 로드맵</td>
+                        </tr>
+                        <tr class="us">
+                            <td>‘당연한 믿음’ 진단</td>
+                            <td><span class="cross">❌ 없음</span></td>
+                            <td class="check">✅ 표면·사회·존재 3층 분석</td>
+                        </tr>
+                        <tr class="them">
+                            <td>전문가 개입</td>
+                            <td>없음 (100% 셀프)</td>
+                            <td class="check">✅ 창업 전문가 검토 포함</td>
+                        </tr>
+                        <tr class="us">
+                            <td>실행 전략 제시</td>
+                            <td><span class="cross">없음 (스스로 판단)</span></td>
+                            <td class="check">✅ 구체적 액션 + 예상 매출 효과</td>
+                        </tr>
+                        <tr class="them">
+                            <td>비용 구조</td>
+                            <td>월 구독 (연 $240)</td>
+                            <td class="price-value">1회 진단 198,000원~ (전문가 검토 포함)</td>
+                        </tr>
+                        <tr class="us">
+                            <td>가치 대비</td>
+                            <td>반복 사용하지 않으면 무용</td>
+                            <td class="price-value">한 번의 인사이트로 매출 변화</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="text-align:center; margin-top:16px; font-size:0.82rem; color:var(--text-dim);">※ LivePlan은 계획 수립에 탁월하지만, 우리는 <strong style="color:var(--gold-light); font-weight:700;">이미 세운 계획의 사각지대</strong>를 없애는 서비스입니다.</p>
+        </section>
+
+        <!-- 전문가 검토 시스템 -->
+        <section class="expert-section">
+            <div class="section-eyebrow">HOW IT WORKS</div>
+            <h2 class="section-title">AI + 자문위원 2단계 진단</h2>
+            <p class="section-sub">AI가 초안을 뽑고,<br>10년 이상 경력의 창업 전문가가 <strong style="color:var(--gold-light); font-weight:700;">사장님의 현실에 맞게</strong> 다듬습니다.</p>
+            <div class="expert-flow">
+                <div class="flow-step">
+                    <div class="step-icon">📋</div>
+                    <div class="step-label">사장님 정보 입력</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="step-icon">🤖</div>
+                    <div class="step-label">AI 1차 전제 추출</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="step-icon">🧑‍💼</div>
+                    <div class="step-label">자문위원 검토</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="step-icon">📦</div>
+                    <div class="step-label">24시간 내 리포트</div>
+                </div>
+            </div>
+            <div class="expert-note">
+                <span style="font-size:1.4rem;">🔍</span>
+                <span><strong style="color:var(--gold-light); font-weight:700;">자문위원은 실제 창업·컨설팅 경력 10년 이상</strong>의 전문가입니다. AI가 놓친 뉘앙스를 보완하고, 실행 가능한 전략으로 완성합니다.</span>
+            </div>
+        </section>
+
+        <!-- 가격 -->
+        <section class="pricing-section" id="track-file">
+            <div class="section-eyebrow">PRICING</div>
+            <h2 class="section-title">내 사업에 꼭 맞는 진단을 선택하세요</h2>
+            <p class="section-sub">모든 플랜에 AI 분석 + 자문위원 검토가 포함됩니다</p>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="plan-name">LITE 라이트</div>
+                    <div class="plan-price">198,000<span>원</span></div>
+                    <div class="plan-desc">질문 답변 기반<br>가볍게 진단</div>
+                    <div class="plan-feature">✓ 숨은 전제 3개</div>
+                    <div class="plan-feature">✓ 전환 전략 리포트</div>
+                    <div class="plan-feature">✓ 30일 로드맵</div>
+                    <div class="plan-feature">✓ 자문위원 검토</div>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="featured-badge">⭐ 가장 인기</div>
+                    <div class="plan-name">STANDARD 스탠다드</div>
+                    <div class="plan-price">298,000<span>원</span></div>
+                    <div class="plan-desc">질문 + 자유 서술<br>더 깊은 인사이트</div>
+                    <div class="plan-feature">✓ 숨은 전제 4개</div>
+                    <div class="plan-feature">✓ 전환 전략 + 액션 플랜</div>
+                    <div class="plan-feature">✓ 업종 벤치마크</div>
+                    <div class="plan-feature">✓ 자문위원 집중 검토</div>
+                </div>
+                <div class="pricing-card">
+                    <div class="plan-name">PREMIUM 프리미엄</div>
+                    <div class="plan-price">398,000<span>원</span></div>
+                    <div class="plan-desc">질문 + 파일 + 코칭<br>가장 정밀한 분석</div>
+                    <div class="plan-feature">✓ 숨은 전제 5개</div>
+                    <div class="plan-feature">✓ 전환 전략 + 재무 시뮬레이션</div>
+                    <div class="plan-feature">✓ 업종 벤치마크</div>
+                    <div class="plan-feature">✓ 1:1 음성 코칭 15분</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 신뢰 -->
+        <section class="trust-section">
+            <div class="trust-quote">
+                “LivePlan으로 계획은 완벽했는데, 막상 실행하니 안 되더라고요. 블라인드 스팟 리포트를 받고서야 ‘내가 당연하게 믿었던 것’이 문제였던 걸 깨달았습니다. 지금은 매출 18% 올랐어요.”
+                <span class="author">— 강OO, 베이커리 운영 4년차, 스탠다드 플랜</span>
+            </div>
+            <div class="trust-logos">
+                <span>소상공인시장진흥공단 협력</span>
+                <span>누적 진단 1,200+</span>
+                <span>만족도 4.9/5.0</span>
+            </div>
+        </section>
+
+        <!-- CTA -->
+        <section class="cta-section">
+            <a href="#" class="cta-btn">지금 무료 체험 진단 시작하기</a>
+            <p class="cta-note">첫 진단은 무료입니다. 사장님 사업의 숨은 전제 1개를 먼저 보여드립니다.</p>
+        </section>
+
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>© Blind Spot Protocol · 블라인드 스팟 체크업 · AI + 자문위원 진단 서비스</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('trackFileCard').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('track-file').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        document.getElementById('trackStepCard').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('track-step').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        document.querySelector('.cta-btn').addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('🎉 진단 페이지로 이동합니다!\n\n1. 사장님 정보 입력\n2. AI 1차 분석\n3. 자문위원 2차 검토\n→ 24시간 내 무료 전제 1개를 보내드립니다.');
+        });
+    </script>
+
+</body>
+</html>
